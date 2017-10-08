@@ -4,14 +4,17 @@ module DeviseTokenAuth
 
     source_root File.expand_path('../templates', __FILE__)
 
-    argument :user_class, type: :string, default: "User"
+    argument :user_class, type: :string, default: 'User'
     argument :mount_path, type: :string, default: 'auth'
+    argument :adapter,    type: :string, default: 'pg'
 
     def create_initializer_file
       copy_file("devise_token_auth.rb", "config/initializers/devise_token_auth.rb")
     end
 
     def copy_migrations
+      return if adapter.downcase == 'mongodb'
+
       if self.class.migration_exists?("db/migrate", "devise_token_auth_create_#{ user_class.underscore }")
         say_status("skipped", "Migration 'devise_token_auth_create_#{ user_class.underscore }' already exists")
       else
@@ -29,7 +32,7 @@ module DeviseTokenAuth
       else
         inclusion = "include DeviseTokenAuth::Concerns::User"
         unless parse_file_for_line(fname, inclusion)
-          
+
           active_record_needle = (Rails::VERSION::MAJOR == 5) ? 'ApplicationRecord' : 'ActiveRecord::Base'
           inject_into_file fname, after: "class #{user_class} < #{active_record_needle}\n" do <<-'RUBY'
   # Include default devise modules.

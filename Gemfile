@@ -37,6 +37,7 @@ group :development, :test do
   gem 'mocha'
 end
 
+gem 'mongoid-locker'
 # code coverage, metrics
 group :test do
   gem "codeclimate-test-reporter", require: nil

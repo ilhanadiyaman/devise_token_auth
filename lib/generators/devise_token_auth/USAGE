@@ -10,6 +10,8 @@ Arguments:
              # 'auth'. More detail documentation is here:
              # https://github.com/lynndylanhurley/devise_token_auth#usage-tldr
 
+  ADAPTER    # Database adapter(pg or mongodb). Default is
+             # pg
 Example:
   rails generate devise_token_auth:install User auth
 
