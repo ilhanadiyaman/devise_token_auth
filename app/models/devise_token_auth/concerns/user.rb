@@ -1,5 +1,4 @@
 require 'bcrypt'
-require 'mongoid-locker'
 
 module DeviseTokenAuth::Concerns::User
   extend ActiveSupport::Concern
@@ -16,7 +15,10 @@ module DeviseTokenAuth::Concerns::User
   end
 
   included do
-    include Mongoid::Locker
+    if DeviseTokenAuth.mongoid?(self)
+      require 'mongoid-locker'
+      include Mongoid::Locker
+    end
 
     # Hack to check if devise is already enabled
     unless self.method_defined?(:devise_modules)
