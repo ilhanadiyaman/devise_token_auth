@@ -22,7 +22,9 @@ module DeviseTokenAuth
                  :remove_tokens_after_password_reset,
                  :default_callbacks,
                  :headers_names,
-                 :bypass_sign_in
+                 :bypass_sign_in,
+                 :add_mongoid_support,
+                 :use_only_mongoid
 
   self.change_headers_on_each_request       = true
   self.max_number_of_devices                = 10
@@ -42,6 +44,8 @@ module DeviseTokenAuth
                                                :'uid' => 'uid',
                                                :'token-type' => 'token-type' }
   self.bypass_sign_in                       = true
+  self.add_mongoid_support                  = false
+  self.use_only_mongoid                     = false
 
   def self.setup(&block)
     yield self
@@ -86,5 +90,11 @@ module DeviseTokenAuth
 
       end
     end
+  end
+
+  def self.mongoid?(user_class)
+    DeviseTokenAuth.add_mongoid_support &&
+    ( DeviseTokenAuth.use_only_mongoid ||
+      ( defined?(::Mongoid) && user_class.included_modules.include?(Mongoid::Document) ) )
   end
 end

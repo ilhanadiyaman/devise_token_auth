@@ -48,4 +48,8 @@ DeviseTokenAuth.setup do |config|
 
   # Whether app needs to be threadsafe/use locks.
   #config.threadsafe = true
+
+  <%= '# ' if !mongoid? %>config.add_mongoid_support = true
+  # If you use only mongoid you should add the flag use_only_mongoid
+  # config.use_only_mongoid = true
 end
