@@ -10,6 +10,7 @@ module DeviseTokenAuth
 
     def create_initializer_file
       copy_file("devise_token_auth.rb", "config/initializers/devise_token_auth.rb")
+      template("devise.rb", "config/initializers/devise.rb") if mongoid?
     end
 
     def copy_migrations
@@ -30,7 +31,6 @@ module DeviseTokenAuth
       unless model_exists?
         template("user.rb", fname)
       else
-
         inclusion = "include DeviseTokenAuth::Concerns::User"
         unless parse_file_for_line(fname, inclusion)
 
