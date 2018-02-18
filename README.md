@@ -1,3 +1,9 @@
+# Contributors wanted!
+
+See our [Contribution Guidelines](https://github.com/lynndylanhurley/devise_token_auth/blob/master/.github/CONTRIBUTING.md). We're making an effort to bring back this gem and fix everything open! Feel free to submit pull requests, review pull requests, or review open issues. If you'd like to get in contact, [Zach Feldman](https://github.com/zachfeldman) has been wrangling this effort, you can reach him with his name @gmail. Further discussion of this in [this issue](https://github.com/lynndylanhurley/devise_token_auth/issues/969).
+
+<hr>
+
 ![Serious Trust](https://github.com/lynndylanhurley/devise_token_auth/raw/master/test/dummy/app/assets/images/logo.jpg "Serious Trust")
 
 [![Gem Version](https://badge.fury.io/rb/devise_token_auth.svg)](http://badge.fury.io/rb/devise_token_auth)
@@ -5,6 +11,7 @@
 [![Code Climate](http://img.shields.io/codeclimate/github/lynndylanhurley/devise_token_auth.svg)](https://codeclimate.com/github/lynndylanhurley/devise_token_auth)
 [![Test Coverage](http://img.shields.io/codeclimate/coverage/github/lynndylanhurley/devise_token_auth.svg)](https://codeclimate.com/github/lynndylanhurley/devise_token_auth)
 [![Dependency Status](https://gemnasium.com/lynndylanhurley/devise_token_auth.svg)](https://gemnasium.com/lynndylanhurley/devise_token_auth)
+[![Downloads](https://img.shields.io/gem/dt/devise_token_auth.svg)](https://rubygems.org/gems/devise_token_auth)
 
 ## Simple, secure token based authentication for Rails.
 
@@ -15,6 +22,7 @@ This gem provides the following features:
 * Seamless integration with:
   * [ng-token-auth](https://github.com/lynndylanhurley/ng-token-auth) for [AngularJS](https://github.com/angular/angular.js)
   * [Angular2-Token](https://github.com/neroniaky/angular2-token) for [Angular2](https://github.com/angular/angular)
+  * [redux-token-auth](https://github.com/kylecorbelli/redux-token-auth) for [React with Redux](https://github.com/reactjs/react-redux)
   * [jToker](https://github.com/lynndylanhurley/j-toker) for [jQuery](https://jquery.com/)
 * Oauth2 authentication using [OmniAuth](https://github.com/intridea/omniauth).
 * Email authentication using [Devise](https://github.com/plataformatec/devise), including:
@@ -63,6 +71,7 @@ Please read the [issue reporting guidelines](#issue-reporting) before posting is
   * [Testing](#testing)
 * [Issue Reporting Guidelines](#issue-reporting)
 * [FAQ](#faq)
+  * [Can I use this gem alongside standard Devise?](#can-i-use-this-gem-alongside-standard-devise)
 * [Conceptual Diagrams](#conceptual)
   * [Token Management](#about-token-management)
   * [Batch Requests](#about-batch-requests)
@@ -141,8 +150,8 @@ The following routes are available for use by your client. These routes live rel
 
 | path | method | purpose |
 |:-----|:-------|:--------|
-| /    | POST   | Email registration. Requires **`email`**, **`password`**, **`password_confirmation`**, and **`confirm_success_url`** params. A verification email will be sent to the email address provided. Accepted params can be customized using the [`devise_parameter_sanitizer`](https://github.com/plataformatec/devise#strong-parameters) system. |
-| / | DELETE | Account deletion. This route will destroy users identified by their **`uid`**, **`access_token`** and **`client`** headers. |
+| /    | POST   | Email registration. Requires **`email`**, **`password`**, **`password_confirmation`**, and **`confirm_success_url`** params (this last one can be omitted if you have set `config.default_confirm_success_url` in `config/initializers/devise_token_auth.rb`). A verification email will be sent to the email address provided. Upon clicking the link in the confirmation email, the API will redirect to the URL specified in **`confirm_success_url`**. Accepted params can be customized using the [`devise_parameter_sanitizer`](https://github.com/plataformatec/devise#strong-parameters) system. |
+| / | DELETE | Account deletion. This route will destroy users identified by their **`uid`**, **`access-token`** and **`client`** headers. |
 | / | PUT | Account updates. This route will update an existing user's account settings. The default accepted params are **`password`** and **`password_confirmation`**, but this can be customized using the [`devise_parameter_sanitizer`](https://github.com/plataformatec/devise#strong-parameters) system. If **`config.check_current_password_before_update`** is set to `:attributes` the **`current_password`** param is checked before any update, if it is set to `:password` the **`current_password`** param is checked only if the request updates user password. |
 | /sign_in | POST | Email authentication. Requires **`email`** and **`password`** as params. This route will return a JSON representation of the `User` model on successful login along with the `access-token` and `client` in the header of the response. |
 | /sign_out | DELETE | Use this route to end the user's current session. This route will invalidate the user's authentication token. You must pass in **`uid`**, **`client`**, and **`access-token`** in the request headers. |
@@ -173,6 +182,7 @@ The following settings are available for configuration in `config/initializers/d
 | **`enable_standard_devise_support`** | `false` | By default, only Bearer Token authentication is implemented out of the box. If, however, you wish to integrate with legacy Devise authentication, you can do so by enabling this flag. NOTE: This feature is highly experimental! |
 | **`remove_tokens_after_password_reset`** | `false` | By default, old tokens are not invalidated when password is changed. Enable this option if you want to make passwords updates to logout other devices. |
 | **`default_callbacks`** | `true` | By default User model will include the `DeviseTokenAuth::Concerns::UserOmniauthCallbacks` concern, which has `email`, `uid` validations & `uid` synchronization callbacks. |
+| **`bypass_sign_in`** | `true` | By default DeviseTokenAuth will not check user's `#active_for_authentication?` which includes confirmation check on each call (it will do it only on sign in). If you want it to be validated on each request (for example, to be able to deactivate logged in users on the fly), set it to false. |
 
 
 Additionally, you can configure other aspects of devise by manually creating the traditional devise.rb file at `config/initializers/devise.rb`. Here are some examples of what you can do in this file:
@@ -490,7 +500,7 @@ Models that include the `DeviseTokenAuth::Concerns::User` concern will have acce
   # store client + token in user's token hash
   @resource.tokens[client_id] = {
     token: BCrypt::Password.create(token),
-    expiry: (Time.now + DeviseTokenAuth.token_lifespan).to_i
+    expiry: (Time.now + @resource.token_lifespan).to_i
   }
 
   # generate auth headers for response
@@ -841,6 +851,11 @@ end
 
 You may be interested in [GrapeTokenAuth](https://github.com/mcordell/grape_token_auth) or [GrapeDeviseTokenAuth](https://github.com/mcordell/grape_devise_token_auth).
 
+### I already have an user, how can I add the new fields?
+
+Check [Setup migrations for an existing User table](https://github.com/lynndylanhurley/devise_token_auth/wiki/Setup-migrations-for-an-existing-User-table)
+
+
 # Conceptual
 
 None of the following information is required to use this gem, but read on if you're curious.
@@ -915,6 +930,8 @@ But the most important step is to use HTTPS. You are on the hook for that.
 Thanks to the following contributors:
 
 * [@booleanbetrayal](https://github.com/booleanbetrayal)
+* [@zachfeldman](https://github.com/zachfeldman)
+* [@MaicolBen](https://github.com/MaicolBen)
 * [@guilhermesimoes](https://github.com/guilhermesimoes)
 * [@jasonswett](https://github.com/jasonswett)
 * [@m2omou](https://github.com/m2omou)
